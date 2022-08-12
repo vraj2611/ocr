@@ -2,6 +2,7 @@
 <h2>OCR Vilmar Jr</h2>
 
 <img [src]="imageUrl" class="image" />
+<p *ngIf="!imageUrl">Copie uma imagem e aperte <kbd>Ctrl</kbd> + <kbd>V</kbd> aqui! </p>
   <h2>Resultado: </h2>
   <p>
     {{ ocrResult }}

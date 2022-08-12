@@ -1,7 +1,6 @@
 import { Component, VERSION } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import * as Tesseract from 'tesseract.js';
-import { createWorker } from 'tesseract.js';
+import { createWorker, ImageLike } from 'tesseract.js';
 
 @Component({
   selector: 'my-app',
@@ -15,52 +14,39 @@ export class AppComponent  {
   private sanitizer: DomSanitizer;
 
   constructor(sanitizer: DomSanitizer) {
-
     this.sanitizer = sanitizer;
-    this.imageUrl = "https://tesseract.projectnaptha.com/img/eng_bw.png";
-    this.doOCR("https://tesseract.projectnaptha.com/img/eng_bw.png");
   }
 
-  async doOCR(image: Tesseract.ImageLike) {
-    this.ocrResult = "Processando... 1"
-    const worker = createWorker({
-      logger: m => console.log(m),
-    });
-    this.ocrResult = "Processando... 2"
+  async processar(image: ImageLike) {
+    this.ocrResult = "Processando... 5"
+    const worker = createWorker({ logger: m => console.log(m) });
+    this.ocrResult = "Processando... 4"
     await worker.load();
     this.ocrResult = "Processando... 3"
-    await worker.loadLanguage('eng');
-    this.ocrResult = "Processando... 4"
-    await worker.initialize('eng');
-    this.ocrResult = "Processando... 5"
+    await worker.loadLanguage('por');
+    this.ocrResult = "Processando... 2"
+    await worker.initialize('por');
+    this.ocrResult = "Processando... 1"
     const { data: { text } } = await worker.recognize(image);
     this.ocrResult = text;
-    console.log(text);
     await worker.terminate();
   }
 
   public handlePaste(event: ClipboardEvent): void {
-    var pastedImage = this.getPastedImage(event);
-    if (!pastedImage) return;
-    this.doOCR(pastedImage);
-    this.imageUrl = this.sanitizer.bypassSecurityTrustUrl( URL.createObjectURL(pastedImage) )
-    
-  }
-
-  private getPastedImage(event: ClipboardEvent): File | null {
-
+    let pastedImage = null;
     if (
       event.clipboardData &&
       event.clipboardData.files &&
       event.clipboardData.files.length &&
-      this.isImageFile(event.clipboardData.files[0])
+      (event.clipboardData.files[0].type.search(/^image\//i) === 0)
     ) {
-      return (event.clipboardData.files[0]);
+      pastedImage = event.clipboardData.files[0];
     }
-    return (null);
+  
+    if (!pastedImage) return;
+    this.processar(pastedImage);
+    this.imageUrl = this.sanitizer.bypassSecurityTrustUrl( URL.createObjectURL(pastedImage) )
+    
+  }
 
-  }
-  private isImageFile(file: File): boolean {
-    return (file.type.search(/^image\//i) === 0);
-  }
 }
