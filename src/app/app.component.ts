@@ -1,5 +1,6 @@
 import { Component, VERSION } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import * as Tesseract from 'tesseract.js';
 import { createWorker } from 'tesseract.js';
 
 @Component({
@@ -17,10 +18,10 @@ export class AppComponent  {
 
     this.sanitizer = sanitizer;
     this.imageUrl = "https://tesseract.projectnaptha.com/img/eng_bw.png";
-    this.doOCR(this.imageUrl);
+    this.doOCR("https://tesseract.projectnaptha.com/img/eng_bw.png");
   }
 
-  async doOCR(url: SafeUrl) {
+  async doOCR(image: Tesseract.ImageLike) {
     this.ocrResult = "Processando... 1"
     const worker = createWorker({
       logger: m => console.log(m),
@@ -32,7 +33,7 @@ export class AppComponent  {
     this.ocrResult = "Processando... 4"
     await worker.initialize('eng');
     this.ocrResult = "Processando... 5"
-    const { data: { text } } = await worker.recognize(String(url));
+    const { data: { text } } = await worker.recognize(image);
     this.ocrResult = text;
     console.log(text);
     await worker.terminate();
@@ -41,9 +42,9 @@ export class AppComponent  {
   public handlePaste(event: ClipboardEvent): void {
     var pastedImage = this.getPastedImage(event);
     if (!pastedImage) return;
+    this.doOCR(pastedImage);
     this.imageUrl = this.sanitizer.bypassSecurityTrustUrl( URL.createObjectURL(pastedImage) )
-    this.ocrResult = "Processando..."
-    this.doOCR(this.imageUrl);
+    
   }
 
   private getPastedImage(event: ClipboardEvent): File | null {
