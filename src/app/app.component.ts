@@ -1,6 +1,6 @@
-import { Component, VERSION } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { createWorker, ImageLike } from 'tesseract.js';
+import { createWorker, Worker } from 'tesseract.js';
 
 @Component({
   selector: 'my-app',
@@ -8,45 +8,39 @@ import { createWorker, ImageLike } from 'tesseract.js';
   styleUrls: [ './app.component.css' ],
   host: { "(window:paste)": "handlePaste( $event )" }
 })
-export class AppComponent  {
-  public ocrResult:string;
+export class AppComponent implements OnDestroy {
+  public text:string;
   public imageUrl: SafeUrl;
   private sanitizer: DomSanitizer;
+  private worker: Worker;
 
   constructor(sanitizer: DomSanitizer) {
     this.sanitizer = sanitizer;
+    this.startWorker();
   }
 
-  async processar(image: ImageLike) {
-    this.ocrResult = "Processando... 5"
-    const worker = createWorker({ logger: m => console.log(m) });
-    this.ocrResult = "Processando... 4"
-    await worker.load();
-    this.ocrResult = "Processando... 3"
-    await worker.loadLanguage('por');
-    this.ocrResult = "Processando... 2"
-    await worker.initialize('por');
-    this.ocrResult = "Processando... 1"
-    const { data: { text } } = await worker.recognize(image);
-    this.ocrResult = text;
-    await worker.terminate();
+  private async startWorker(){
+    this.worker = createWorker({ logger: m => this.text = m.status + "... " + Math.round(100 * m.progress) + "%" });
+    await this.worker.load();
+    await this.worker.loadLanguage('por');
+    await this.worker.initialize('por');
+    this.text = "Pronto. Copie uma imagem e aperte Ctrl + V nessa tela."
+  }
+
+  ngOnDestroy(): void {
+    this.worker.terminate();
   }
 
   public handlePaste(event: ClipboardEvent): void {
-    let pastedImage = null;
-    if (
-      event.clipboardData &&
+    if (!(event.clipboardData &&
       event.clipboardData.files &&
       event.clipboardData.files.length &&
       (event.clipboardData.files[0].type.search(/^image\//i) === 0)
-    ) {
-      pastedImage = event.clipboardData.files[0];
-    }
-  
-    if (!pastedImage) return;
-    this.processar(pastedImage);
-    this.imageUrl = this.sanitizer.bypassSecurityTrustUrl( URL.createObjectURL(pastedImage) )
-    
+    )) return;
+
+    const image = event.clipboardData.files[0];  
+    this.imageUrl = this.sanitizer.bypassSecurityTrustUrl( URL.createObjectURL(image) )
+    this.worker.recognize(image).then(result => this.text = result.data.text);
   }
 
 }
