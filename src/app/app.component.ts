@@ -1,6 +1,7 @@
 import { Component, OnDestroy } from '@angular/core';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { createWorker, Worker } from 'tesseract.js';
+import { SafeUrl } from '@angular/platform-browser';
+import { Observable } from 'rxjs';
+import { TesseractService, ITesseractData } from './tesseract.service';
 
 @Component({
   selector: 'my-app',
@@ -10,48 +11,32 @@ import { createWorker, Worker } from 'tesseract.js';
 })
 export class AppComponent implements OnDestroy {
   public text:string;
-  public progression: number;
-  public imageUrl: SafeUrl;
-  private sanitizer: DomSanitizer;
-  private worker: Worker;
+  // public progression: number;
+  // public imageUrl: SafeUrl;
+  tdados$: Observable<ITesseractData>;
 
-  constructor(sanitizer: DomSanitizer) {
-    this.sanitizer = sanitizer;
-    this.startWorker();
-  }
-
-  private async startWorker(){
-    this.worker = createWorker({ logger: m => {
-      this.text = m.status + "... " + Math.round(100 * m.progress) + "%";
-      this.progression = m.progress;
-    }});
-    await this.worker.load();
-    await this.worker.loadLanguage('por');
-    await this.worker.initialize('por');
-    this.text = "Pronto. Copie uma imagem e aperte Ctrl + V nessa tela."
+  constructor(private tserv:TesseractService) {
+    this.tdados$ = this.tserv.dados$()
   }
 
   ngOnDestroy(): void {
-    this.worker.terminate();
+    this.tserv.terminate()
   }
 
-  public handlePaste(event: ClipboardEvent): void {
-    
-    if (event.clipboardData.getData('text').length > 0) this.text = this.removerLinhasVazias( event.clipboardData.getData('text'));
+  public colar(){
+  }
+
+  public handlePaste(event: ClipboardEvent): void {    
+    if (event.clipboardData.getData('text').length > 0) this.text = event.clipboardData.getData('text');
     if (!(event.clipboardData?.files[0])) return;
-    const file = event.clipboardData.files[0];
-    if (file.type.search(/^image\//i) === 0){
-      this.imageUrl = this.sanitizer.bypassSecurityTrustUrl( URL.createObjectURL(file))
-      this.worker.recognize(file).then(result => this.text = this.removerLinhasVazias( result.data.text));
-    }
+    this.tserv.processarImagem(event.clipboardData.files[0]);
   }
 
-  private removerLinhasVazias(text:string){
-    return text.split("\n")
-      .reduce((prev, curr)=>{
-        if (curr.replace(" ","").trim().length == 0) return prev;
-        return prev + curr.trim() + "\n";
-      },"")
+  public selecionarArquivo(event) {
+    const target: DataTransfer = <DataTransfer>(event.target);
+    if (target.files.length !== 1) throw new Error('Cannot use multiple files');
+    this.tserv.processarImagem(target.files[0]);
   }
+
 }
 
