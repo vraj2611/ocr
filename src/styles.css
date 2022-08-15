@@ -3,5 +3,8 @@
 body {
     margin: 0px;
     font-family: Tahoma, Verdana, sans-serif;
-    background-color: linen;
+    background: rgb(2,0,36);
+    background: linear-gradient(138deg, rgba(2,0,36,1) 0%, rgba(9,9,121,1) 28%, rgba(1,104,235,1) 71%, rgba(0,212,255,1) 95%);
+    color: white;
 }
+
