@@ -7,7 +7,7 @@ import { createWorker, Worker } from 'tesseract.js';
 export interface ITesseractData {
     text: string;
     progression: number;
-    imageUrl: SafeUrl;    
+    imageUrl: SafeUrl;
 }
 
 @Injectable({
@@ -20,9 +20,9 @@ export class TesseractService {
     private sanitizer: DomSanitizer;
     private worker: Worker;
     private _dados = new BehaviorSubject<ITesseractData>(null)
-  
-    dados$(){
-      return this._dados.asObservable()
+
+    dados$() {
+        return this._dados.asObservable()
     }
 
     constructor(sanitizer: DomSanitizer) {
@@ -65,6 +65,15 @@ export class TesseractService {
                 })
             })
         }
+    }
+
+    public bypassImagem(file) {
+        this.imageUrl = this.sanitizer.bypassSecurityTrustUrl(URL.createObjectURL(file))
+        this._dados.next({
+            imageUrl: this.imageUrl,
+            progression: 1,
+            text: "ok"
+        })
     }
 
     private removerLinhasVazias(text: string) {

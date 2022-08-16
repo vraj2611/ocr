@@ -4,9 +4,11 @@
 
 <div style="display: flex; width: 100%;" *ngIf="tdados$ | async as tdados">
   <div style="width: 50%; min-height:200px;" class="content">
-    <h4 style="margin:0px;">Resultado <span *ngIf="tdados.progression < 1"><progress max="1" [value]="tdados.progression"></progress></span></h4>
+    <h4 style="margin:0px;">Resultado <span *ngIf="tdados.progression < 1"><progress max="1"
+          [value]="tdados.progression"></progress></span></h4>
     &nbsp;
-    <textarea type="text" spellcheck="true" style="width: 100%; height: 80%; max-width: 100%;">{{ tdados.text }}</textarea>
+    <textarea type="text" spellcheck="true"
+      style="width: 100%; height: 80%; max-width: 100%;">{{ tdados.text }}</textarea>
   </div>
   <div style="width: 50%;" class="content">
     <h4 style="margin:0px;">Imagem</h4>
@@ -15,11 +17,22 @@
     <input type="file" #inputFile (change)="selecionarArquivo($event)" style="display:none">
     <div *ngIf="tdados.progression == 1">
       Origens: <button>Ctrl + V</button>
-      ou 
+      ou
       <button (click)="inputFile.click()">Arquivo...</button>
-      ou 
-      <button (click)="colar()">Câmera...</button> 
     </div>
   </div>
-  
+
+</div>
+
+<div id="previewcamera" [ngClass]="statusmodalcamera">
+  <div style="width: 80%; height: 80%;">
+    <video [class.show]="!isCaptured" [class.hide]="isCaptured" #video id="video" [width]="WIDTH" [height]="HEIGHT"
+      autoplay></video>
+    <canvas [class.show]="isCaptured" [class.hide]="!isCaptured" #canvas id="canvas" [width]="WIDTH"
+      [height]="HEIGHT"></canvas>
+  </div>
+  <button *ngIf="!isCaptured" (click)="capture()">
+    Take Photo
+  </button>
+  <button (click)="capturarFoto()">Capturar</button>
 </div>
